@@ -28,6 +28,13 @@ public class BiobuzzConstants {
     public static PinpointConfig pinpointConfig = new PinpointConfig(c -> {
         c.name.set("odometry");
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+
+//        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+//        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+//        c.xPodOffset.set(143.95);
+//        c.yPodOffset.set(-90.1);
+//        c.offsetUnits.set(DistanceUnit.MM);
+
         c.xPodOffset.set(-5.188086802565207);
         c.yPodOffset.set(-3.9179028488519623);
         c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSED);

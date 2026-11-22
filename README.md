@@ -1,4 +1,100 @@
-## NOTICE
+# BioBuzz robot software
+
+This repository builds the Robot Controller app for the team's BIOBUZZ robot. The competition code lives in [TeamCode's Pedro package](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro). Start with TeleOp to verify the hardware, then select the autonomous route for your alliance and starting position.
+
+## Build and deploy
+
+1. Clone this team repository and open its root folder in Android Studio as a Gradle project.
+2. Use Android Studio Narwhal 3 Feature Drop or later. Install Android SDK Platform 30, sync the project, and use the checked-in Gradle wrapper. The project uses FTC SDK **12.0.0**, AGP **8.13.2**, Gradle **9.1.0**, Pedro REV Hub **3.0.2**, and Pedro tuning **1.0.3**.
+3. Build the debug APK from the repository root:
+
+   ```powershell
+   .\gradlew.bat :TeamCode:assembleDebug
+   ```
+
+   On macOS or Linux, use `./gradlew :TeamCode:assembleDebug`. Find the APK in `TeamCode/build/outputs/apk/debug/`.
+4. Select the `TeamCode` run configuration and deploy to the connected Robot Controller. On the Driver Station, activate the robot configuration with the device names below, then select the desired OpMode.
+
+Build versions and dependencies are declared in [build.gradle](build.gradle), [build.dependencies.gradle](build.dependencies.gradle), [TeamCode/build.gradle](TeamCode/build.gradle), and the [Gradle wrapper properties](gradle/wrapper/gradle-wrapper.properties). The upstream FTC SDK notes appear below the team guide.
+
+## Robot configuration
+
+Use these exact names in the active Robot Controller hardware configuration. Match the hub ports to the wiring on the robot.
+
+| Name | Device | Used by | Code behavior |
+| --- | --- | --- | --- |
+| `frontLeft` | Drive motor | Auto and TeleOp | Reverse |
+| `backLeft` | Drive motor | Auto and TeleOp | Forward |
+| `frontRight` | Drive motor | Auto and TeleOp | Forward |
+| `backRight` | Drive motor | Auto and TeleOp | Reverse |
+| `flywheel` | Encoder-equipped motor | Auto and TeleOp | Reverse, encoder velocity control |
+| `intake` | Motor | Auto and TeleOp | Direction is set by the mechanism command. Auto maps it and stops it. |
+| `transfer` | Motor | Auto and TeleOp | Feeds the launcher or runs in the direction commanded by TeleOp. |
+| `gate` | Servo | Auto and TeleOp | Closed at 0, open at 0.03 |
+| `flowerWedge` | Servo | Auto and TeleOp | Raised at 0, lowered at 0.45 |
+| `odometry` | goBILDA Pinpoint with 4-bar pods | Auto | Provides field position and heading to Pedro. |
+| `dc` | Digital channel | TeleOp | Configured as an input. Telemetry shows the raw boolean. |
+
+[BiobuzzConstants.java](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/BiobuzzConstants.java) holds the shared drive configuration and Pinpoint setup. The current Pinpoint offsets are approximately **X −5.1881 in** and **Y −3.9179 in**, with the X pod reversed and Y pod forward. Both offsets and reported distances use inches. Auto combines the Pinpoint localizer, the same Pedro mecanum drivetrain used by TeleOp, and the Foresight path-following algorithm.
+
+[BioBuzzMechanisms.java](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/BioBuzzMechanisms.java) owns the launcher and mechanism settings. The flywheel target is **1,150 encoder ticks/s**, its velocity PIDF is **(50, 0, 0, 14.4)**, and the launcher feed runs the transfer forward at **0.18** power with the gate open. Auto sets intake and transfer to brake at zero power.
+
+## TeleOp
+
+Select **BioBuzzTeleOp**. All controls are on gamepad 1.
+
+| Control | Action |
+| --- | --- |
+| Left stick | Forward/back and strafe |
+| Right stick horizontal | Turn |
+| Hold right trigger | Scale translation inputs to 50% and turn input to 80%. Release for normal drive. |
+| Hold right bumper | Run intake in reverse and transfer forward, both at full power. Release to stop both. |
+| Hold D-pad Up | Run intake forward at half power. Release to stop it. |
+| Hold left bumper | Open the gate and feed the launcher. Release to close the gate and stop the transfer. |
+| Hold Square | Reverse transfer at half power. Release to stop it. |
+| Circle / Triangle | Lower / raise the flower wedge. |
+
+The bumper, D-pad, and Square actions are handled on button press and release. Several share the intake or transfer, so releasing one can stop a motor while another control is still held.
+
+[BioBuzzTeleOp.java](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/BioBuzzTeleOp.java) reads the controller and calls [MecanumDrive.java](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/MecanumDrive.java). That adapter applies slow mode and converts the joystick strafe and turn signs to Pedro's conventions. Pedro mixes and normalizes the four wheel powers.
+
+The flywheel is first commanded to 50% of its target after Start. The ramp timer begins before Start, with the 80% stage at 4 seconds and full speed at 8 seconds on that timer. Depending on how long the robot waits after Init, it can skip intermediate stages. Telemetry shows measured flywheel velocity, the final target, flywheel power, and raw `dc` state. The digital sensor is currently used only for telemetry. Check its value with a ball present and absent to determine its polarity.
+
+## Autonomous
+
+Select the alliance and starting position directly from the Driver Station menu. **Near** and **Far** refer to distance from that alliance's parking area.
+
+Poses below are `(x, y, heading)` in field inches and degrees. The visualizer origin is at the lower-left, with +X to the right and +Y up. The Java classes convert headings to radians.
+
+| OpMode | Start | Launch | Park |
+| --- | --- | --- | --- |
+| [BioBuzz Red Near](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/BioBuzzAutoRedNear.java) | (56, 135, −90°) | (56, 129, −90°) | (10, 108, −90°) |
+| [BioBuzz Red Far](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/BioBuzzAutoRedFar.java) | (56, 8, 90°) | (56.3359, 21.724, 180°) | (4.9672, 98.0221, −56.0491°) |
+| [BioBuzz Blue Near](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/BioBuzzAutoBlueNear.java) | (88, 9, 90°) | (88, 15, 90°) | (134, 36, 90°) |
+| [BioBuzz Blue Far](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/BioBuzzAutoBlueFar.java) | (88, 136, 270°) | (87.6641, 122.276, 360°) | (139.0328, 45.9779, 123.9509°) |
+
+Each OpMode defines its own poses and paths. Near drives straight forward 6 inches, then parks through a waypoint with a constant heading. Far turns as it approaches the launch point, then parks along a straight line using reverse-tangent heading. For Far, that heading follows the path tangent plus 180° rather than interpolating to the park pose's heading. The Blue routes are the corresponding Red routes rotated 180° about the center of a 144-inch field.
+
+[BioBuzzAuto.java](TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedro/BioBuzzAuto.java) runs the same sequence for all four routes:
+
+1. **Init** sets the follower pose to the chosen start and initializes the mechanisms.
+2. **Approach** follows the launch path. It stops the drive on arrival and ends Auto if the path times out at 4 seconds.
+3. **Spin-up** waits for the flywheel to come within 75 ticks/s of 1,150. If it takes 5 seconds without reaching tolerance, Auto skips feeding and starts parking.
+4. **Feed** opens the gate and runs the transfer for 4 seconds. This stage is timed for preloads.
+5. **Park** stops the launcher and follows the parking path. It ends when the path completes or the 14-second parking timeout expires. A separate cutoff stops active Auto outputs at 29.5 seconds.
+
+Driver Station telemetry shows the selected alliance and start, stage, target coordinates, live pose, remaining time, and flywheel speed. Use it to check the initialized pose and identify which stage timed out.
+
+## Changing or testing the robot
+
+- **Drive or odometry changed.** Check wheel direction and Pinpoint position and heading before running Auto. Update the shared configuration in `BiobuzzConstants.java` if the mounting or wiring changes.
+- **Route changed.** Edit the relevant Auto class. Confirm the start placement, launch aim, and clearance along every segment with the full robot footprint. The Near parking waypoints are estimates. The Far endpoints are about 5 inches from a side boundary.
+- **Launcher changed.** Update shared velocity, feed power, or servo settings in `BioBuzzMechanisms.java`. Check the Auto tolerance and stage durations in `BioBuzzAuto.java` with the actual preload count.
+- **OpMode fails during Init.** Check that the active hardware configuration contains the exact names and device types above. TeleOp needs `dc`. Auto needs `odometry`.
+
+## Upstream FTC SDK documentation
+
+### NOTICE
 
 This repository contains the public FTC SDK for the BIOBUZZ (2026-2027) competition season.
 
