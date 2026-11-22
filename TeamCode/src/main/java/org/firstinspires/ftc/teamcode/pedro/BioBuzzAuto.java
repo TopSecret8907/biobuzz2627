@@ -1,15 +1,12 @@
 package org.firstinspires.ftc.teamcode.pedro;
 
-import com.pedropathing.api.Paths;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "BioBuzz Auto", group = "BioBuzz")
-public class BioBuzzAuto extends OpMode {
+public abstract class BioBuzzAuto extends OpMode {
     // Stage budgets total 27 seconds, leaving time before AUTO ends at 30 seconds.
     private static final double APPROACH_TIMEOUT_SECONDS = 4.0;
     private static final double PARKING_TIMEOUT_SECONDS = 14.0;
@@ -19,31 +16,8 @@ public class BioBuzzAuto extends OpMode {
 
     // Timed feed for four preloads. Tune on the robot with a full load.
     private static final double FEED_SECONDS = 4.0;
-
-    private enum HiveRoute {
-        // Estimated field coordinates in inches, origin at bottom-left, +Y upward.
-        // Hive Up starts at the bottom facing up. Hive Down starts at the top facing down.
-        // Each approach is six inches. Both routes park in the upper-left red LOADING ZONE.
-        // Intermediate parking points take the robot around the left side of the HIVES.
-        // Measure these poses and check clearance with the robot's full footprint.
-        UP(new Pose(56, 9, Math.toRadians(90)), new Pose(56, 15, Math.toRadians(90)),
-                new Pose(26, 24, Math.toRadians(90)),
-                new Pose(26, 108, Math.toRadians(90)),
-                new Pose(10, 108, Math.toRadians(90))),
-        DOWN(new Pose(56, 135, Math.toRadians(-90)), new Pose(56, 129, Math.toRadians(-90)),
-                new Pose(26, 129, Math.toRadians(-90)),
-                new Pose(10, 108, Math.toRadians(-90)));
-
-        final Pose start;
-        final Pose launch;
-        final Pose[] parkingWaypoints;
-
-        HiveRoute(Pose start, Pose launch, Pose... parkingWaypoints) {
-            this.start = start;
-            this.launch = launch;
-            this.parkingWaypoints = parkingWaypoints;
-        }
-    }
+    protected enum Alliance { RED, BLUE }
+    protected enum StartPosition { FAR, NEAR }
 
     private enum State {
         READY, APPROACH, SPINUP, FEEDING, PARKING, COMPLETE, PATH_TIMED_OUT, AUTO_TIMED_OUT
@@ -51,7 +25,11 @@ public class BioBuzzAuto extends OpMode {
 
     private final ElapsedTime autoTimer = new ElapsedTime();
     private final ElapsedTime stateTimer = new ElapsedTime();
-    private HiveRoute route = HiveRoute.UP;
+    private final Alliance alliance;
+    private final StartPosition route;
+    private final Pose startPose;
+    private final Pose launchPose;
+    private final Pose parkPose;
     private State state = State.READY;
     private boolean spinupTimedOut;
     private Follower follower;
@@ -59,22 +37,23 @@ public class BioBuzzAuto extends OpMode {
     private Path approachPath;
     private Path parkingPath;
 
-    private void buildPaths() {
-        approachPath = Paths.line(route.start, route.launch).constant(route.start.heading());
-        Path[] parkingSegments = new Path[route.parkingWaypoints.length];
-        Pose previous = route.launch;
-        for (int i = 0; i < route.parkingWaypoints.length; i++) {
-            Pose destination = route.parkingWaypoints[i];
-            parkingSegments[i] = Paths.line(previous, destination).constant(route.launch.heading());
-            previous = destination;
-        }
-        parkingPath = Paths.path(parkingSegments);
+    protected BioBuzzAuto(Alliance alliance, StartPosition route, Pose startPose,
+                         Pose launchPose, Pose parkPose) {
+        this.alliance = alliance;
+        this.route = route;
+        this.startPose = startPose;
+        this.launchPose = launchPose;
+        this.parkPose = parkPose;
     }
+
+    protected abstract Path buildApproachPath();
+
+    protected abstract Path buildParkingPath();
 
     @Override
     public void init() {
         follower = BiobuzzConstants.create(hardwareMap);
-        follower.setPose(route.start);
+        follower.setPose(startPose);
         mechanisms = new BioBuzzMechanisms(hardwareMap);
         mechanisms.initialize();
         mechanisms.configureForAutonomous();
@@ -85,23 +64,18 @@ public class BioBuzzAuto extends OpMode {
 
     @Override
     public void init_loop() {
-        if (gamepad1.dpad_up) {
-            route = HiveRoute.UP;
-        } else if (gamepad1.dpad_down) {
-            route = HiveRoute.DOWN;
-        }
-
         follower.update();
-        follower.setPose(route.start);
+        follower.setPose(startPose);
         reportTelemetry();
     }
 
     @Override
     public void start() {
-        buildPaths();
+        approachPath = buildApproachPath();
+        parkingPath = buildParkingPath();
         autoTimer.reset();
         spinupTimedOut = false;
-        follower.setPose(route.start);
+        follower.setPose(startPose);
         follower.follow(approachPath);
         enter(State.APPROACH);
     }
@@ -195,14 +169,11 @@ public class BioBuzzAuto extends OpMode {
     }
 
     private void reportTelemetry() {
-        telemetry.addData("Hive route", route);
-        if (state == State.READY) {
-            telemetry.addLine("D-pad up/down selects the hive route");
-        }
+        telemetry.addData("Alliance", alliance);
+        telemetry.addData("Start relative to parking", route);
         telemetry.addData("State", state);
-        telemetry.addData("Launch target (in)", "%.1f, %.1f", route.launch.x(), route.launch.y());
-        Pose park = route.parkingWaypoints[route.parkingWaypoints.length - 1];
-        telemetry.addData("Park target (in)", "%.1f, %.1f", park.x(), park.y());
+        telemetry.addData("Launch target (in)", "%.1f, %.1f", launchPose.x(), launchPose.y());
+        telemetry.addData("Park target (in)", "%.1f, %.1f", parkPose.x(), parkPose.y());
         double elapsed = state == State.READY ? 0 : autoTimer.seconds();
         telemetry.addData("AUTO seconds remaining", "%.1f", Math.max(0, 30.0 - elapsed));
         if (spinupTimedOut) {
