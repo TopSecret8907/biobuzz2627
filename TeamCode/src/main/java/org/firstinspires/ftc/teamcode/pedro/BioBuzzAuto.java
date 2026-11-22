@@ -34,7 +34,6 @@ public abstract class BioBuzzAuto extends OpMode {
     private boolean spinupTimedOut;
     private Follower follower;
     private BioBuzzMechanisms mechanisms;
-    private Path approachPath;
     private Path parkingPath;
 
     protected BioBuzzAuto(Alliance alliance, StartPosition route, Pose startPose,
@@ -71,7 +70,7 @@ public abstract class BioBuzzAuto extends OpMode {
 
     @Override
     public void start() {
-        approachPath = buildApproachPath();
+        Path approachPath = buildApproachPath();
         parkingPath = buildParkingPath();
         autoTimer.reset();
         spinupTimedOut = false;
