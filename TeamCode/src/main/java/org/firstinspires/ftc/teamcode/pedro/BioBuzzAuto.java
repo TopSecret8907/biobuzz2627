@@ -20,7 +20,15 @@ public abstract class BioBuzzAuto extends OpMode {
     protected enum StartPosition { FAR, NEAR }
 
     private enum State {
-        READY, APPROACH, SPINUP, FEEDING, PARKING, COMPLETE, PATH_TIMED_OUT, AUTO_TIMED_OUT
+        READY(0), APPROACH(APPROACH_TIMEOUT_SECONDS), SPINUP(SPINUP_TIMEOUT_SECONDS),
+        FEEDING(FEED_SECONDS), PARKING(PARKING_TIMEOUT_SECONDS),
+        COMPLETE(0), PATH_TIMED_OUT(0), AUTO_TIMED_OUT(0);
+
+        final double durationLimit;
+
+        State(double durationLimit) {
+            this.durationLimit = durationLimit;
+        }
     }
 
     private final ElapsedTime autoTimer = new ElapsedTime();
@@ -51,6 +59,7 @@ public abstract class BioBuzzAuto extends OpMode {
 
     @Override
     public void init() {
+        telemetry.log().setCapacity(10);
         follower = BiobuzzConstants.create(hardwareMap);
         follower.setPose(startPose);
         mechanisms = new BioBuzzMechanisms(hardwareMap);
@@ -76,7 +85,7 @@ public abstract class BioBuzzAuto extends OpMode {
         spinupTimedOut = false;
         follower.setPose(startPose);
         follower.follow(approachPath);
-        enter(State.APPROACH);
+        enter(State.APPROACH, "Start pressed");
     }
 
     @Override
@@ -85,7 +94,7 @@ public abstract class BioBuzzAuto extends OpMode {
         if (autoTimer.seconds() >= AUTO_STOP_SECONDS) {
             if (state != State.COMPLETE && state != State.PATH_TIMED_OUT
                     && state != State.AUTO_TIMED_OUT) {
-                finish(State.AUTO_TIMED_OUT);
+                finish(State.AUTO_TIMED_OUT, "29.5 s Auto cutoff");
             }
             reportTelemetry();
             return;
@@ -98,9 +107,9 @@ public abstract class BioBuzzAuto extends OpMode {
                 if (!follower.isBusy()) {
                     stopDrive();
                     mechanisms.setFlywheelVelocity(BioBuzzMechanisms.LAUNCH_VELOCITY);
-                    enter(State.SPINUP);
+                    enter(State.SPINUP, "Approach complete");
                 } else if (stateTimer.seconds() >= APPROACH_TIMEOUT_SECONDS) {
-                    finish(State.PATH_TIMED_OUT);
+                    finish(State.PATH_TIMED_OUT, "Approach path timed out");
                 }
                 break;
 
@@ -109,24 +118,24 @@ public abstract class BioBuzzAuto extends OpMode {
                         - mechanisms.getFlywheelVelocity());
                 if (speedError <= FLYWHEEL_TOLERANCE) {
                     mechanisms.startFeedingLauncher();
-                    enter(State.FEEDING);
+                    enter(State.FEEDING, "Flywheel within tolerance");
                 } else if (stateTimer.seconds() >= SPINUP_TIMEOUT_SECONDS) {
                     spinupTimedOut = true;
-                    startParking();
+                    startParking("Flywheel timed out, feeding skipped");
                 }
                 break;
 
             case FEEDING:
                 if (stateTimer.seconds() >= FEED_SECONDS) {
-                    startParking();
+                    startParking("Feed timer complete");
                 }
                 break;
 
             case PARKING:
                 if (!follower.isBusy()) {
-                    finish(State.COMPLETE);
+                    finish(State.COMPLETE, "Parking path complete");
                 } else if (stateTimer.seconds() >= PARKING_TIMEOUT_SECONDS) {
-                    finish(State.PATH_TIMED_OUT);
+                    finish(State.PATH_TIMED_OUT, "Parking path timed out");
                 }
                 break;
 
@@ -140,21 +149,25 @@ public abstract class BioBuzzAuto extends OpMode {
         reportTelemetry();
     }
 
-    private void enter(State nextState) {
+    private void enter(State nextState, String reason) {
+        Pose pose = follower.pose();
+        telemetry.log().add("%.1fs %s -> %s (%.1fs): %s @ %.1f, %.1f, %.0f deg",
+                autoTimer.seconds(), state, nextState, state == State.READY ? 0 : stateTimer.seconds(),
+                reason, pose.x(), pose.y(), Math.toDegrees(pose.heading()));
         state = nextState;
         stateTimer.reset();
     }
 
-    private void startParking() {
+    private void startParking(String reason) {
         stopLauncher();
         follower.follow(parkingPath);
-        enter(State.PARKING);
+        enter(State.PARKING, reason);
     }
 
-    private void finish(State result) {
+    private void finish(State result, String reason) {
         stopDrive();
         stopLauncher();
-        enter(result);
+        enter(result, reason);
     }
 
     private void stopDrive() {
@@ -171,7 +184,16 @@ public abstract class BioBuzzAuto extends OpMode {
         telemetry.addData("Alliance", alliance);
         telemetry.addData("Start relative to parking", route);
         telemetry.addData("State", state);
-        telemetry.addData("Launch target (in)", "%.1f, %.1f", launchPose.x(), launchPose.y());
+        telemetry.addData("Follower", "%s (busy: %b)", follower.mode(), follower.isBusy());
+        if (state.durationLimit > 0) {
+            telemetry.addData("Stage time (s)", "%.1f / %.1f", stateTimer.seconds(), state.durationLimit);
+        }
+        if (follower.following()) {
+            telemetry.addData("Path progress", "%.0f%%, segment %d",
+                    follower.completion() * 100, follower.pathIndex() + 1);
+        }
+        telemetry.addData("Launch target (in, deg)", "%.1f, %.1f, %.0f",
+                launchPose.x(), launchPose.y(), Math.toDegrees(launchPose.heading()));
         telemetry.addData("Park target (in)", "%.1f, %.1f", parkPose.x(), parkPose.y());
         double elapsed = state == State.READY ? 0 : autoTimer.seconds();
         telemetry.addData("AUTO seconds remaining", "%.1f", Math.max(0, 30.0 - elapsed));
@@ -182,7 +204,14 @@ public abstract class BioBuzzAuto extends OpMode {
         telemetry.addData("X (in)", pose.x());
         telemetry.addData("Y (in)", pose.y());
         telemetry.addData("Heading (deg)", Math.toDegrees(pose.heading()));
-        telemetry.addData("Flywheel velocity", mechanisms.getFlywheelVelocity());
+        double flywheelVelocity = mechanisms.getFlywheelVelocity();
+        telemetry.addData("Flywheel (ticks/s)", "%.0f", flywheelVelocity);
+        if (state == State.SPINUP || state == State.FEEDING) {
+            telemetry.addData("Flywheel target", "%d +/- %.0f",
+                    BioBuzzMechanisms.LAUNCH_VELOCITY, FLYWHEEL_TOLERANCE);
+            telemetry.addData("Flywheel speed error (ticks/s)", "%.0f",
+                    Math.abs(BioBuzzMechanisms.LAUNCH_VELOCITY - flywheelVelocity));
+        }
         telemetry.update();
     }
 
