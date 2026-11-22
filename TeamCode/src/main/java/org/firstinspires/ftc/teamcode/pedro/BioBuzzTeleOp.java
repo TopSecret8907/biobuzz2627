@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.pedro;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp
@@ -15,12 +16,14 @@ public class BioBuzzTeleOp extends LinearOpMode {
     public void runOpMode() {
         BioBuzzMechanisms mechanisms = new BioBuzzMechanisms(hardwareMap);
         MecanumDrive drive = new MecanumDrive(hardwareMap);
+        DigitalChannel digitalChannel = hardwareMap.get(DigitalChannel.class, "dc");
+        digitalChannel.setMode(DigitalChannel.Mode.INPUT);
 
         // The original ramp counts time spent waiting for Start.
         ElapsedTime flywheelTimer = new ElapsedTime();
         flywheelTimer.reset();
         mechanisms.initialize();
-        telemetry.addData("dc init", mechanisms.getDigitalChannel().getState());
+        telemetry.addData("dc init", digitalChannel.getState());
         telemetry.update();
 
         waitForStart();
@@ -44,7 +47,7 @@ public class BioBuzzTeleOp extends LinearOpMode {
                     }
                 }
 
-                updateTelemetry(mechanisms);
+                updateTelemetry(mechanisms, digitalChannel);
             }
         }
     }
@@ -86,12 +89,12 @@ public class BioBuzzTeleOp extends LinearOpMode {
 
     }
 
-    private void updateTelemetry(BioBuzzMechanisms mechanisms) {
+    private void updateTelemetry(BioBuzzMechanisms mechanisms, DigitalChannel digitalChannel) {
         telemetry.addLine("Motors");
         telemetry.addData("flywheelVelocity", mechanisms.getFlywheelVelocity());
         telemetry.addData("targetVelocity", BioBuzzMechanisms.LAUNCH_VELOCITY);
         telemetry.addData("flywheelPower", mechanisms.getFlywheelPower());
-        telemetry.addData("dc", mechanisms.getDigitalChannel().getState());
+        telemetry.addData("dc", digitalChannel.getState());
         telemetry.update();
     }
 }
