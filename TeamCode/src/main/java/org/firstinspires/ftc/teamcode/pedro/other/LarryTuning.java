@@ -27,15 +27,15 @@ public class LarryTuning {
     @Tuner(name = "LarryBoy Foresight Tuner")
     public static Procedure foresightTuner() {
         return new ForesightTuner(
-                hardwareMap -> new PinpointLocalizer(hardwareMap, DecodeLarryConstants.localizerConfig),
-                hardwareMap -> new Mecanum(hardwareMap, DecodeLarryConstants.mecanumConfig));
+                hardwareMap -> new PinpointLocalizer(hardwareMap, LarryConstants.localizerConfig),
+                hardwareMap -> new Mecanum(hardwareMap, LarryConstants.mecanumConfig));
     }
 
     @Tuner(name = "LarryBoy Tests")
     public static Procedure tests() {
         return new Tests(
-                hardwareMap -> new Mecanum(hardwareMap, DecodeLarryConstants.mecanumConfig),
-                hardwareMap -> new PinpointLocalizer(hardwareMap, DecodeLarryConstants.localizerConfig),
+                hardwareMap -> new Mecanum(hardwareMap, LarryConstants.mecanumConfig),
+                hardwareMap -> new PinpointLocalizer(hardwareMap, LarryConstants.localizerConfig),
                 null);
     }
 }
