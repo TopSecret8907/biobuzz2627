@@ -14,10 +14,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class DecodeLarryConstants {
     public static final MecanumConfig mecanumConfig = new MecanumConfig(c -> {
-        c.frontLeftName.set("frontLeft");
-        c.backLeftName.set("backLeft");
-        c.frontRightName.set("frontRight");
-        c.backRightName.set("backRight");
+        c.frontLeftName.set("leftFront");
+        c.backLeftName.set("leftRear");
+        c.frontRightName.set("rightFront");
+        c.backRightName.set("rightRear");
 
         c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
         c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD);
@@ -26,7 +26,7 @@ public class DecodeLarryConstants {
     });
 
     public static final PinpointConfig pinpointConfig = new PinpointConfig(c -> {
-        c.name.set("odometry");
+        c.name.set("pinpoint");
         c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
         c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSED);
         c.xPodOffset.set(143.95);

@@ -9,6 +9,7 @@ import org.firstinspires.ftc.teamcode.pedro.BiobuzzConstants;
 import org.firstinspires.ftc.teamcode.pedro.procedures.ForesightTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.MecanumTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.PinpointTuner;
+import org.firstinspires.ftc.teamcode.pedro.procedures.Tests;
 
 public class Tuning {
     @Tuner
@@ -24,6 +25,11 @@ public class Tuning {
     @Tuner
     public static Procedure foresightTuner() {
         return new ForesightTuner((hardwareMap) -> new PinpointLocalizer(hardwareMap, BiobuzzConstants.pinpointConfig), (hardwareMap) -> new Mecanum(hardwareMap, BiobuzzConstants.mecanumConfig));
+    }
+
+    @Tuner
+    public static Procedure tests() {
+        return new Tests(hardwareMap -> new Mecanum(hardwareMap, DecodeLarryConstants.mecanumConfig), (hardwareMap -> new PinpointLocalizer(hardwareMap, DecodeLarryConstants.localizerConfig)), null);
     }
 
 
