@@ -41,6 +41,24 @@ public class Tests extends Procedure {
         @DisplayName("Pose Test")
         POSE
     }
+
+    private enum HardwareTest {
+        @DisplayName("Localization Test")
+        LOCALIZATION(Test.LOCALIZATION),
+        @DisplayName("Odometry Test")
+        ODOMETRY(Test.ODOMETRY),
+        @DisplayName("Driving Test")
+        DRIVING(Test.DRIVING),
+        @DisplayName("Pose Test")
+        POSE(Test.POSE);
+
+        private final Test test;
+
+        HardwareTest(Test test) {
+            this.test = test;
+        }
+    }
+
     Function<HardwareMap, Drivetrain> drivetrainFunction;
     Function<HardwareMap, Localizer> localizerFunction;
     Supplier<Algorithm> algorithmSupplier;
@@ -70,13 +88,23 @@ public class Tests extends Procedure {
         if (algorithm && localizer && drivetrain)
             followerFunction = (hardwareMap) -> new Follower(localizerFunction.apply(hardwareMap), drivetrainFunction.apply(hardwareMap), algorithmSupplier.get());
 
-        Inputs inputs = inputs("Select", "Select");
-        Inputs.Field<Test> selectedTest = inputs.e("Test", Test.class).withDefault(Test.LINE);
-        Inputs.Field<Double> distance = inputs.d("Distance").withDefault(48.0);
+        Inputs inputs = inputs("Select", "Select a test.");
+        Test selectedTest;
+        double distance = 48.0;
+        if (!algorithm && localizer && drivetrain) {
+            Inputs.Field<HardwareTest> testField = inputs.e("Test", HardwareTest.class)
+                    .withDefault(HardwareTest.LOCALIZATION);
+            awaitInputs(inputs);
+            selectedTest = testField.get().test;
+        } else {
+            Inputs.Field<Test> testField = inputs.e("Test", Test.class).withDefault(Test.LINE);
+            Inputs.Field<Double> distanceField = inputs.d("Distance").withDefault(distance);
+            awaitInputs(inputs);
+            selectedTest = testField.get();
+            distance = distanceField.get();
+        }
 
-        awaitInputs(inputs);
-
-        switch (selectedTest.get()) {
+        switch (selectedTest) {
             case HOLD:
                 if (!algorithm)
                     throw new IllegalArgumentException("Algorithm is required for Hold Test.");
@@ -85,17 +113,17 @@ public class Tests extends Procedure {
             case LINE:
                 if (!algorithm)
                     throw new IllegalArgumentException("Algorithm is required for Hold Test.");
-                completed = runOpMode(new TestsLine(followerFunction, distance.get()));
+                completed = runOpMode(new TestsLine(followerFunction, distance));
                 break;
             case CURVED:
                 if (!algorithm)
                     throw new IllegalArgumentException("Algorithm is required for Hold Test.");
-                completed = runOpMode(new TestsCurve(followerFunction, distance.get()));
+                completed = runOpMode(new TestsCurve(followerFunction, distance));
                 break;
             case INTERPOLATION_CURVED:
                 if (!algorithm)
                     throw new IllegalArgumentException("Algorithm is required for Hold Test.");
-                completed = runOpMode(new TestsInterpolation(followerFunction, distance.get()));
+                completed = runOpMode(new TestsInterpolation(followerFunction, distance));
                 break;
             case LOCALIZATION:
                 if (!drivetrain)

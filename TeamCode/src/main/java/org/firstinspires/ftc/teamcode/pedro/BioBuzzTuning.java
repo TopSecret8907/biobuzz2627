@@ -8,20 +8,26 @@ import com.pedropathing.tuning.autotune.Tuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.ForesightTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.MecanumTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.PinpointTuner;
+import org.firstinspires.ftc.teamcode.pedro.procedures.Tests;
 
 public class BioBuzzTuning {
-    @Tuner
+    @Tuner(name = "BioBuzz Mecanum Tuner")
     public static Procedure mecanumTuner() {
         return new MecanumTuner();
     }
 
-    @Tuner
+    @Tuner(name = "BioBuzz Pinpoint Tuner")
     public static Procedure pinpointTuner() {
         return new PinpointTuner();
     }
 
-    @Tuner
+    @Tuner(name = "BioBuzz Foresight Tuner")
     public static Procedure foresightTuner() {
         return new ForesightTuner((hardwareMap) -> new PinpointLocalizer(hardwareMap, BiobuzzConstants.pinpointConfig), (hardwareMap) -> new Mecanum(hardwareMap, BiobuzzConstants.mecanumConfig));
+    }
+
+    @Tuner(name = "BioBuzz Tests")
+    public static Procedure tests() {
+        return new Tests(hardwareMap -> new Mecanum(hardwareMap, BiobuzzConstants.mecanumConfig), (hardwareMap -> new PinpointLocalizer(hardwareMap, BiobuzzConstants.pinpointConfig)), null);
     }
 }
