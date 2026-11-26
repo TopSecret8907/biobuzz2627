@@ -17,7 +17,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "LarryAutoSimple", group = "Autonomous")
 public class LarryAutoSimple extends LinearOpMode {
-    private static final double PATH_TIMEOUT_SECONDS = 4.0;
+    private static final double PATH_TIMEOUT_SECONDS = 3.0;
 
     private Follower follower;
 
