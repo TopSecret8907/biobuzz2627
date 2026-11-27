@@ -29,8 +29,8 @@ public final class BioBuzzMechanisms {
     public void initialize() {
         setGateOpen(false);
         setFlowerWedgeLowered(false);
-        flywheel1.setDirection(DcMotor.Direction.FORWARD);
-        flywheel2.setDirection(DcMotor.Direction.REVERSE);
+        flywheel1.setDirection(DcMotor.Direction.REVERSE);
+        flywheel2.setDirection(DcMotor.Direction.FORWARD);
         flywheel1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         flywheel1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
