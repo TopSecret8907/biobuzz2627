@@ -15,10 +15,10 @@ public class TransferTuning extends LinearOpMode  {
     // highVelocity is a constant set to the velocity we want to have when we aren't shooting
     public double highVelocity = 1000;
     // lowVelocity is a constant set to the velocity that the flywheel dips to when we shoot a ball
-    public double lowVelocity = 1000;
+    public double lowVelocity = 900;
     // curTargetVelocity is a variable set to the velocity we are trying to get to at the moment
     double curTargetVelocity = highVelocity;
-    double F = 0;
+    double F = 15.5;
     double P = 0;
     // values that get added or subtracted to F or P when we use the d-pad
     double[] stepSizes = {10.0, 1.0, 0.1, 0.01, 0.001, 0.0001};
