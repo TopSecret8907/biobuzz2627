@@ -81,14 +81,14 @@ public class DualFlywheelTuning extends LinearOpMode  {
             flywheelMotor2.setPower(flywheelMotor.getPower());
             // telemetry
             double curVelocity = flywheelMotor.getVelocity();
-            double curVelocity2 = flywheelMotor2.getVelocity();
+            double curPower1 = flywheelMotor.getPower();
+            double curPower2 = flywheelMotor2.getPower();
             double error = curTargetVelocity - curVelocity;
-            double error2 = curTargetVelocity - curVelocity2;
             tel.addData("Target Velocity", curTargetVelocity);
             tel.addData("Current Velocity", curVelocity);
             tel.addData("Error", error);
-            tel.addData("Current Velocity2", curVelocity2);
-            tel.addData("Error2", error2);
+            tel.addData("Current Power1", curPower1);
+            tel.addData("Current Power2", curPower2);
             tel.addData("Tuning P", P);
             tel.addData("Tuning F",F);
             tel.addData("Step Size", stepSizes[stepIndex]);
