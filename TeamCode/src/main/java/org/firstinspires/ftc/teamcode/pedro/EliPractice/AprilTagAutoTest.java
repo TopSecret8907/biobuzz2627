@@ -29,6 +29,15 @@ public abstract class AprilTagAutoTest extends OpMode {
     private static final double SPINUP_TIMEOUT_SECONDS = 5.0;
     private static final double FLYWHEEL_TOLERANCE = 75;
 
+    // initialize camera for april tags
+    private static final boolean USE_WEBCAM = true;
+    private AprilTagProcessor aprilTag;
+    private VisionPortal visionPortal;
+    private Position cameraPosition = new Position(DistanceUnit.INCH,
+            0, 0, 0, 0);
+    private YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
+            0, -90, 0, 0);
+
     // Timed feed for four preloads. Tune on the robot with a full load.
     private static final double FEED_SECONDS = 4.0;
     protected enum Alliance { RED, BLUE }
@@ -82,6 +91,7 @@ public abstract class AprilTagAutoTest extends OpMode {
         mechanisms.configureForAutonomous();
         stopLauncher();
         mechanisms.stopIntake();
+        initAprilTag();
         reportTelemetry();
     }
 
@@ -239,5 +249,18 @@ public abstract class AprilTagAutoTest extends OpMode {
             stopLauncher();
             mechanisms.stopIntake();
         }
+    }
+    private void initAprilTag() {
+        aprilTag = new AprilTagProcessor.Builder()
+                .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+                .build();
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+        if (USE_WEBCAM) {
+            builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
+        } else {
+            builder.setCamera(BuiltinCameraDirection.BACK);
+        }
+        builder.addProcessor(aprilTag);
+        visionPortal = builder.build();
     }
 }

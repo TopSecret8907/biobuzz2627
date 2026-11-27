@@ -12,14 +12,16 @@ public final class BioBuzzMechanisms {
 
     private final Servo gate;
     private final Servo flowerWedge;
-    private final DcMotorEx flywheel;
+    private final DcMotorEx flywheel1;
+    private final DcMotorEx flywheel2;
     private final DcMotor intake;
     private final DcMotor transfer;
 
     public BioBuzzMechanisms(HardwareMap hardwareMap) {
         gate = hardwareMap.get(Servo.class, "gate");
         flowerWedge = hardwareMap.get(Servo.class, "flowerWedge");
-        flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");
+        flywheel1 = hardwareMap.get(DcMotorEx.class, "flywheel1");
+        flywheel2 = hardwareMap.get(DcMotorEx.class, "flywheel2");
         intake = hardwareMap.get(DcMotor.class, "intake");
         transfer = hardwareMap.get(DcMotor.class, "transfer");
     }
@@ -27,11 +29,12 @@ public final class BioBuzzMechanisms {
     public void initialize() {
         setGateOpen(false);
         setFlowerWedgeLowered(false);
-        flywheel.setDirection(DcMotor.Direction.REVERSE);
-        flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
+        flywheel1.setDirection(DcMotor.Direction.FORWARD);
+        flywheel2.setDirection(DcMotor.Direction.REVERSE);
+        flywheel1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheel2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        flywheel1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
                 new PIDFCoefficients(50, 0, 0, 14.4));
-
     }
 
     public void configureForAutonomous() {
@@ -76,18 +79,18 @@ public final class BioBuzzMechanisms {
     }
 
     public void setFlywheelVelocity(double ticksPerSecond) {
-        flywheel.setVelocity(ticksPerSecond);
+        flywheel1.setVelocity(ticksPerSecond);
     }
 
     public void stopFlywheel() {
-        flywheel.setPower(0);
+        flywheel1.setPower(0);
     }
 
     public double getFlywheelVelocity() {
-        return flywheel.getVelocity();
+        return flywheel1.getVelocity();
     }
 
     public double getFlywheelPower() {
-        return flywheel.getPower();
+        return flywheel1.getPower();
     }
 }
