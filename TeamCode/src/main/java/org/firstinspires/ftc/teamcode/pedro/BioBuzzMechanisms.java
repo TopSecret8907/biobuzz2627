@@ -34,7 +34,7 @@ public final class BioBuzzMechanisms {
 
     }
 
-    void configureForAutonomous() {
+    public void configureForAutonomous() {
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
