@@ -11,32 +11,30 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 @TeleOp
 public class TransferTuning extends LinearOpMode  {
-    public DcMotorEx flywheelMotor;
+    public DcMotorEx transferMotor;
     // highVelocity is a constant set to the velocity we want to have when we aren't shooting
     public double highVelocity = 1150;
     // lowVelocity is a constant set to the velocity that the flywheel dips to when we shoot a ball
     public double lowVelocity = 1050;
     // curTargetVelocity is a variable set to the velocity we are trying to get to at the moment
     double curTargetVelocity = highVelocity;
-    // old flywheel F = 14.4
-    // old flywheel P = 50
-    double F = 12.6;
-    double P = 300;
+    double F = 0;
+    double P = 0;
     // values that get added or subtracted to F or P when we use the d-pad
     double[] stepSizes = {10.0, 1.0, 0.1, 0.01, 0.001, 0.0001};
     // this tells us which value in the list we are going to use next time the d-pad is pressed
-    int stepIndex = 0;
+    int stepIndex = 1;
 
     @Override
     public void runOpMode() {
         // motor setup
-        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheel");
-        flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        transferMotor = hardwareMap.get(DcMotorEx.class, "transfer");
+        transferMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         // direction is reverse on old flywheel, forward on new flywheel
-        flywheelMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        transferMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         // PIDF setup
         PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P,0,0,F);
-        flywheelMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidfCoefficients);
+        transferMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidfCoefficients);
         // ftc dashboard telemetry setup
         MultipleTelemetry tel = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         waitForStart();
@@ -70,11 +68,11 @@ public class TransferTuning extends LinearOpMode  {
 
             // set new PIDF coefficients
             pidfCoefficients = new PIDFCoefficients(P,0,0,F);
-            flywheelMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidfCoefficients);
+            transferMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidfCoefficients);
 
             // set velocity
-            flywheelMotor.setVelocity(curTargetVelocity);
-            double curVelocity = flywheelMotor.getVelocity();
+            transferMotor.setVelocity(curTargetVelocity);
+            double curVelocity = transferMotor.getVelocity();
             double error = curTargetVelocity - curVelocity;
             // telemetry
             tel.addData("Target Velocity", curTargetVelocity);
