@@ -13,9 +13,9 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 public class TransferTuning extends LinearOpMode  {
     public DcMotorEx transferMotor;
     // highVelocity is a constant set to the velocity we want to have when we aren't shooting
-    public double highVelocity = 1150;
+    public double highVelocity = 1730;
     // lowVelocity is a constant set to the velocity that the flywheel dips to when we shoot a ball
-    public double lowVelocity = 1050;
+    public double lowVelocity = 1730;
     // curTargetVelocity is a variable set to the velocity we are trying to get to at the moment
     double curTargetVelocity = highVelocity;
     double F = 0;
