@@ -22,11 +22,11 @@ public class DualFlywheelTuning extends LinearOpMode  {
     // old flywheel F = 14.4
     // old flywheel P = 50
     double F = 12.6;
-    double P = 300;
+    double P = 0;
     // values that get added or subtracted to F or P when we use the d-pad
-    double[] stepSizes = {10.0, 1.0, 0.1, 0.01, 0.001, 0.0001};
+    double[] stepSizes = {100.0, 10.0, 1.0, 0.1, 0.01, 0.001, 0.0001};
     // this tells us which value in the list we are going to use next time the d-pad is pressed
-    int stepIndex = 0;
+    int stepIndex = 1;
 
     @Override
     public void runOpMode() {
@@ -79,11 +79,11 @@ public class DualFlywheelTuning extends LinearOpMode  {
             // set velocity
             flywheelMotor.setVelocity(curTargetVelocity);
             flywheelMotor2.setPower(flywheelMotor.getPower());
+            // telemetry
             double curVelocity = flywheelMotor.getVelocity();
             double curVelocity2 = flywheelMotor2.getVelocity();
             double error = curTargetVelocity - curVelocity;
             double error2 = curTargetVelocity - curVelocity2;
-            // telemetry
             tel.addData("Target Velocity", curTargetVelocity);
             tel.addData("Current Velocity", curVelocity);
             tel.addData("Error", error);
