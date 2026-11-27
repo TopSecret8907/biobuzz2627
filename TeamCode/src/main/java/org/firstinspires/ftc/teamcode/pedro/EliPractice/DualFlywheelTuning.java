@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 @TeleOp
 public class DualFlywheelTuning extends LinearOpMode  {
     public DcMotorEx flywheelMotor;
+    public DcMotorEx flywheelMotor2;
     // highVelocity is a constant set to the velocity we want to have when we aren't shooting
     public double highVelocity = 1150;
     // lowVelocity is a constant set to the velocity that the flywheel dips to when we shoot a ball
@@ -30,10 +31,13 @@ public class DualFlywheelTuning extends LinearOpMode  {
     @Override
     public void runOpMode() {
         // motor setup
-        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheel");
+        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheel1");
+        flywheelMotor2 = hardwareMap.get(DcMotorEx.class, "flywheel2");
         flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheelMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         // direction is reverse on old flywheel, forward on new flywheel
         flywheelMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        flywheelMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
         // PIDF setup
         PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P,0,0,F);
         flywheelMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,pidfCoefficients);
@@ -74,6 +78,7 @@ public class DualFlywheelTuning extends LinearOpMode  {
 
             // set velocity
             flywheelMotor.setVelocity(curTargetVelocity);
+            flywheelMotor2.setPower(flywheelMotor.getPower());
             double curVelocity = flywheelMotor.getVelocity();
             double error = curTargetVelocity - curVelocity;
             // telemetry
